@@ -1,4 +1,5 @@
 
+TYPE_DATA = 254
 TYPE_COLOR = 255
 
 net.Receivers = {}
@@ -137,16 +138,17 @@ end
 
 net.WriteVars =
 {
-	[TYPE_NIL]			= function ( t, v )	net.WriteUInt( t, 8 )								end,
-	[TYPE_STRING]		= function ( t, v )	net.WriteUInt( t, 8 )	net.WriteString( v )		end,
-	[TYPE_NUMBER]		= function ( t, v )	net.WriteUInt( t, 8 )	net.WriteDouble( v )		end,
-	[TYPE_TABLE]		= function ( t, v )	net.WriteUInt( t, 8 )	net.WriteTable( v )			end,
-	[TYPE_BOOL]			= function ( t, v )	net.WriteUInt( t, 8 )	net.WriteBool( v )			end,
-	[TYPE_ENTITY]		= function ( t, v )	net.WriteUInt( t, 8 )	net.WriteEntity( v )		end,
-	[TYPE_VECTOR]		= function ( t, v )	net.WriteUInt( t, 8 )	net.WriteVector( v )		end,
-	[TYPE_ANGLE]		= function ( t, v )	net.WriteUInt( t, 8 )	net.WriteAngle( v )			end,
-	[TYPE_MATRIX]		= function ( t, v ) net.WriteUInt( t, 8 )	net.WriteMatrix( v )		end,
-	[TYPE_COLOR]		= function ( t, v ) net.WriteUInt( t, 8 )	net.WriteColor( v )			end,
+	[TYPE_NIL]		= function ( t, v )	net.WriteUInt( t, 8 )										end,
+	[TYPE_STRING]		= function ( t, v )	net.WriteUInt( t, 8 )	net.WriteString( v )							end,
+	[TYPE_NUMBER]		= function ( t, v )	net.WriteUInt( t, 8 )	net.WriteDouble( v )							end,
+	[TYPE_TABLE]		= function ( t, v )	net.WriteUInt( t, 8 )	net.WriteTable( v )							end,
+	[TYPE_BOOL]		= function ( t, v )	net.WriteUInt( t, 8 )	net.WriteBool( v )							end,
+	[TYPE_ENTITY]		= function ( t, v )	net.WriteUInt( t, 8 )	net.WriteEntity( v )							end,
+	[TYPE_VECTOR]		= function ( t, v )	net.WriteUInt( t, 8 )	net.WriteVector( v )							end,
+	[TYPE_ANGLE]		= function ( t, v )	net.WriteUInt( t, 8 )	net.WriteAngle( v )							end,
+	[TYPE_MATRIX]		= function ( t, v ) 	net.WriteUInt( t, 8 )	net.WriteMatrix( v )							end,
+	[TYPE_DATA] 		= function ( t, v ) 	net.WriteUInt( t, 8 ) 	v = util.Compress( v ) net.WriteUInt( #v, 16 ) net.WriteData( v ) 	end,
+	[TYPE_COLOR]		= function ( t, v ) 	net.WriteUInt( t, 8 )	net.WriteColor( v )							end,
 }
 
 function net.WriteType( v )
@@ -156,6 +158,9 @@ function net.WriteType( v )
 		typeid = TYPE_COLOR
 	else
 		typeid = TypeID( v )
+		if typeid == 4 and #v > 65532 then
+			typeid = TYPE_DATA
+		end
 	end
 
 	local wv = net.WriteVars[ typeid ]
@@ -167,15 +172,16 @@ end
 
 net.ReadVars =
 {
-	[TYPE_NIL]		= function ()	return nil end,
+	[TYPE_NIL]	= function ()	return nil end,
 	[TYPE_STRING]	= function ()	return net.ReadString() end,
 	[TYPE_NUMBER]	= function ()	return net.ReadDouble() end,
 	[TYPE_TABLE]	= function ()	return net.ReadTable() end,
-	[TYPE_BOOL]		= function ()	return net.ReadBool() end,
+	[TYPE_BOOL]	= function ()	return net.ReadBool() end,
 	[TYPE_ENTITY]	= function ()	return net.ReadEntity() end,
 	[TYPE_VECTOR]	= function ()	return net.ReadVector() end,
 	[TYPE_ANGLE]	= function ()	return net.ReadAngle() end,
 	[TYPE_MATRIX]	= function ()	return net.ReadMatrix() end,
+	[TYPE_DATA] 	= function ()	local len = net.ReadUInt(16) return net.ReadData(len) end,
 	[TYPE_COLOR]	= function ()	return net.ReadColor() end,
 }
 
